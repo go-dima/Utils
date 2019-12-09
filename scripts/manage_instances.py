@@ -68,12 +68,8 @@ def dry_power_on(instances):
     print(f"Dry run: Start {len(instances)} instance{add_suffix(instances)}")
 
 
-def extract_instances_data():
+def get_instances_data():
     return [extract_instance_data(instance) for instance in ec2client.instances.filter(Filters=filters)]
-
-
-def extract_instances_ip():
-    return extract_instances_data()[0]['ip']
 
 
 ec2client = None
@@ -84,7 +80,7 @@ if __name__ == '__main__':
     args = parse_args()
     ec2client = boto3.resource('ec2', region_name=mapToRegionKey(args.region))
     filters = [dict(Name='tag:Name', Values=[f"*{args.machineName}*"])]
-    instancesData = extract_instances_data()
+    instancesData = get_instances_data()
     for instanceData in instancesData:
         print(f"{instanceData['name']}: {instanceData['ip']} - {instanceData['state']}")
 
@@ -97,9 +93,9 @@ if __name__ == '__main__':
 
     power_on(instancesData)
 
-    if args.async:
+    if args.async or len(instancesData) != 1:
         exit(0)
 
-    while extract_instances_ip() is None:
+    while get_instances_data()[0]['state'] != 'running':
         pass
-    print(extract_instances_ip())
+    print(get_instances_data()[0]['ip'])
