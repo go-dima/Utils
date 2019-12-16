@@ -48,7 +48,7 @@ def flatten(tags):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-r', '--region', action='store', dest='region', help='Region to describe')
+    parser.add_argument('-r', '--region', action='store', default='frankfurt', dest='region', help='Region to describe')
     parser.add_argument('-n', '--name', action='store', dest='machineName', help='Machine Tag:Name')
     parser.add_argument('-a', '--async', action='store_true', default=False, help='Async mode')
     parser.add_argument('-l', '--list', action='store_true', default=False, help='List matching machines')
