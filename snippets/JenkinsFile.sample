@@ -1,0 +1,113 @@
+pipeline {
+    agent { node { label 'node-name' } }
+    options { ansiColor 'xterm' }
+    parameters {
+        choice choices: ['dev', 'latest', 'release'], name: 'artifact_channel', description: ''
+        string defaultValue: '10.1.17-some-branch-latest',
+               name: 'samle_artifact_name',
+               description: 'Sample atrifact',
+               trim: true
+        string defaultValue: 'nothing', description: 'Custom description', name: 'custom_description', trim: true
+	    booleanParam defaultValue: true, name: 'run_parallel_2', description: 'Run Parallel 2'
+	    booleanParam defaultValue: false, name: 'extended_description', description: 'Describe build parameters'
+    }
+    stages {
+        stage('Init Build') {
+            steps {
+                script {
+                    (samle_artifact_version, samle_artifact_branch, samle_artifact_build) = splitArtifactName(params.samle_artifact_name)
+                    description = buildDescriptionString()
+                    String description = sh(returnStdout: true, script: 'git show -s --format=format:"%s" HEAD').trim()
+                    if (params.extended_description) {
+                        description = "${description}" + "<br>"
+                        description += "Artifact: ${params.artifact_channel} of ${params.samle_artifact_name}"
+                    }
+                    buildDescription "${description}"
+                }
+            }
+        }
+        stage('Common pre-parallel') {
+            steps {
+				sh """
+					echo "Common pre-parallel" >> run.log
+				"""
+            }
+        }
+        stage('Parallel Part 1') {
+            parallel {
+                stage ('Parallel 1.1') {
+                    steps {
+						sh """
+							echo "Parallel 1.1" >> run.log
+						"""
+                    }
+                }
+                stage ('Parallel 1.2') {
+                    steps {
+						sh """
+							echo "Parallel 1.2" >> run.log
+						"""
+                    }
+                }
+            }
+        }
+        stage('Parallel Part 2') {
+			when { expression { params.run_parallel_2 } }
+            parallel {
+                stage('Parallel 2.1') {
+                    steps {
+						sh """
+							echo "Parallel Part 2.1" >> run.log
+						"""
+                    }
+                }
+                stage('Parallel 2.2') {
+                    steps {
+						sh """
+							echo "Parallel Part 2.2" >> run.log
+						"""
+                    }
+                }
+            }
+        }
+        stage('Common post-parellel') {
+            steps {
+				sh """
+					echo "Common post-parellel" >> run.log
+				"""
+            }
+        }
+    }
+    post {
+        always {
+			script {
+				println "postAlways"
+			}
+            archiveArtifacts artifacts: 'run.log', fingerprint: true, allowEmptyArchive: true, onlyIfSuccessful: false
+        }
+        success {
+			script {
+				println "postSucces"
+			}
+        }
+    }
+}
+
+String buildDescriptionString() {
+    wrap([$class: 'BuildUser']) {
+        def splittedBranchName = env.BRANCH_NAME.split("-|/", 2)
+        def realBranchName = splittedBranchName.size() > 1 ? splittedBranchName[1] : splittedBranchName[0]
+        return env.BUILD_USER_ID ? params.custom_description : "${realBranchName}-${env.BUILD_NUMBER}"
+    }
+}
+
+String[] splitArtifactName(String toSplit) {
+    String[] parts = toSplit.split("-", 2) // 10.1.17-some-branch-latest => [10.1.17, some-branch-latest]
+    int last_dash = parts[1].lastIndexOf('-')
+    String version = parts[0]
+    String branch = parts[1].substring(0, last_dash) // some-branch-latest => some-branch
+    String build = parts[1].substring(last_dash + 1) // some-branch-latest => latest
+
+    println toSplit + " => " + version + ", " + branch + ", " + build
+    return [version, branch, build]
+}
