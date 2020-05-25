@@ -1,0 +1,32 @@
+---
+
+- name: Define aql parameters
+  set_fact:
+    artifactory_url: https://artifactory
+    aql_find: "items.find({\"repo\":{\"$eq\":\"{{ repository }}\"},\"path\":{\"$match\": \"{{ package }}*\"}})"
+    aql_sort: "{\"$desc\": [\"repo\",\"created\"]}"
+
+- name: Find latest from atrifactory
+  uri:
+    url: "{{ artifactory_url }}/api/search/aql"
+    user: "{{ artifactory_user }}"
+    password: "{{ artifactory_password }}"
+    method: POST
+    headers:
+      Content-Type: text/plain
+    body: "{{ aql_find }}.sort({{ aql_sort }}).limit(1)"
+    force_basic_auth: yes
+    validate_certs: no
+  register: artifactory_response
+
+- name: Store result
+  set_fact:
+    found_artifact: "{{ artifactory_response.json.results[0] }}"
+
+- name: Download the Artifact
+  get_url:
+    url: "{{ artifactory_url }}/{{ repository }}/{{ found_artifact.path }}/{{ found_artifact.name }}"
+    dest: "{{ lookup('env','WORKSPACE') }}"
+    url_username: "{{ artifactory_user }}"
+    url_password: "{{ artifactory_password }}"
+    validate_certs: no
