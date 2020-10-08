@@ -53,6 +53,7 @@ def parse_args():
     parser.add_argument('-a', '--async', action='store_true', dest='run_async', default=False, help='Async mode')
     parser.add_argument('-l', '--list', action='store_true', default=False, help='List matching machines')
     parser.add_argument('-d', '--dry-run', action='store_true', dest='dry_run', default=False, help='Perform dry run')
+    parser.add_argument('-p', '--profile', action='store', default='default', help='Profile name to use')
     return parser.parse_args()
 
 
@@ -78,7 +79,8 @@ args = None
 
 if __name__ == '__main__':
     args = parse_args()
-    ec2client = boto3.resource('ec2', region_name=mapToRegionKey(args.region))
+    session = boto3.session.Session(profile_name=args.profile)
+    ec2client = session.resource('ec2', region_name=mapToRegionKey(args.region))
     filters = [dict(Name='tag:Name', Values=[f"*{args.machineName}*"])]
     instancesData = get_instances_data()
     for instanceData in instancesData:
