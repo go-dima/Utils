@@ -50,7 +50,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-r', '--region', action='store', default='frankfurt', dest='region', help='Region to describe')
     parser.add_argument('-n', '--name', action='store', dest='machineName', help='Machine Tag:Name')
-    parser.add_argument('-a', '--async', action='store_true', default=False, help='Async mode')
+    parser.add_argument('-a', '--async', action='store_true', dest='run_async', default=False, help='Async mode')
     parser.add_argument('-l', '--list', action='store_true', default=False, help='List matching machines')
     parser.add_argument('-d', '--dry-run', action='store_true', dest='dry_run', default=False, help='Perform dry run')
     return parser.parse_args()
@@ -93,7 +93,7 @@ if __name__ == '__main__':
 
     power_on(instancesData)
 
-    if args.async or len(instancesData) != 1:
+    if args.run_async or len(instancesData) != 1:
         exit(0)
 
     while get_instances_data()[0]['state'] != 'running':
