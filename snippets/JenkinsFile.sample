@@ -8,8 +8,8 @@ pipeline {
                description: 'Sample atrifact',
                trim: true
         string defaultValue: 'nothing', description: 'Custom description', name: 'custom_description', trim: true
-	    booleanParam defaultValue: true, name: 'run_parallel_2', description: 'Run Parallel 2'
-	    booleanParam defaultValue: false, name: 'extended_description', description: 'Describe build parameters'
+        booleanParam defaultValue: true, name: 'run_parallel_2', description: 'Run Parallel 2'
+        booleanParam defaultValue: false, name: 'extended_description', description: 'Describe build parameters'
     }
     stages {
         stage('Init Build') {
@@ -28,67 +28,67 @@ pipeline {
         }
         stage('Common pre-parallel') {
             steps {
-				sh """
-					echo "Common pre-parallel" >> run.log
-				"""
+                sh """
+                    echo "Common pre-parallel" >> run.log
+                """
             }
         }
         stage('Parallel Part 1') {
             parallel {
                 stage ('Parallel 1.1') {
                     steps {
-						sh """
-							echo "Parallel 1.1" >> run.log
-						"""
+                        sh """
+                            echo "Parallel 1.1" >> run.log
+                        """
                     }
                 }
                 stage ('Parallel 1.2') {
                     steps {
-						sh """
-							echo "Parallel 1.2" >> run.log
-						"""
+                        sh """
+                            echo "Parallel 1.2" >> run.log
+                        """
                     }
                 }
             }
         }
         stage('Parallel Part 2') {
-			when { expression { params.run_parallel_2 } }
+            when { expression { params.run_parallel_2 } }
             parallel {
                 stage('Parallel 2.1') {
                     steps {
-						sh """
-							echo "Parallel Part 2.1" >> run.log
-						"""
+                        sh """
+                            echo "Parallel Part 2.1" >> run.log
+                        """
                     }
                 }
                 stage('Parallel 2.2') {
                     steps {
-						sh """
-							echo "Parallel Part 2.2" >> run.log
-						"""
+                        sh """
+                            echo "Parallel Part 2.2" >> run.log
+                        """
                     }
                 }
             }
         }
         stage('Common post-parellel') {
             steps {
-				sh """
-					echo "Common post-parellel" >> run.log
-				"""
+                sh """
+                    echo "Common post-parellel" >> run.log
+                """
             }
         }
     }
     post {
         always {
-			script {
-				println "postAlways"
-			}
+            script {
+                println "postAlways"
+            }
             archiveArtifacts artifacts: 'run.log', fingerprint: true, allowEmptyArchive: true, onlyIfSuccessful: false
         }
         success {
-			script {
-				println "postSucces"
-			}
+            script {
+                println "postSucces"
+            }
         }
     }
 }
