@@ -1,0 +1,25 @@
+---
+
+- name: Set Java facts
+  set_fact:
+    jdk_package: zulu11
+    java_major_version: 11.29
+    java_minor_version: 11
+
+- name: Install Java
+  win_chocolatey:
+    name: "{{ jdk_package }}"
+    state: present
+    version: "{{ java_major_version }}.{{ java_minor_version }}"
+
+- name: Set Java_home
+  win_environment:
+    state: present
+    name: JAVA_HOME
+    value: 'c:\program files\java\jdk1.{{ java_major_version }}_{{ java_minor_version }}'
+    level: machine
+
+- name: Add Java to path
+  win_path:
+    elements:
+      - 'c:\program files\java\jdk{{ java_major_version }}_{{ java_minor_version }}\bin'

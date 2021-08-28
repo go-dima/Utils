@@ -1,0 +1,22 @@
+# my-service.service
+[Unit]
+Description = MyService
+After = network.target
+
+[Service]
+User=???
+Group=???
+Type=forking
+ExecStart=/path/to/start.sh
+ExecStop=/path/to/stop.sh
+RestartSec=60
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+# Install
+cp my-service.service /etc/systemd/system
+chmod +x /etc/systemd/system/my-service.service
+systemctl preset my-service.service >/dev/null 2>&1 || :
+systemctl enable my-service >/dev/null 2>&1 || :
