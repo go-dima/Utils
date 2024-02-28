@@ -1,0 +1,7 @@
+version: "3"
+
+includes:
+  # kodem-dev-utils
+  kodem:
+    taskfile: DIR_PLACEHOLDER/Taskfile.yml
+    dir: DIR_PLACEHOLDER

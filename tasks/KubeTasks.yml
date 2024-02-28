@@ -1,0 +1,49 @@
+version: "3"
+
+vars:
+  DEFAULT_CONTEXT:
+    sh: kubectl config current-context
+  CONTEXT: "{{ .CONTEXT | default .DEFAULT_CONTEXT }}"
+  DEFAULT_NAMESPACE:
+    sh: kubectl --context {{.CONTEXT}} config view --minify -o jsonpath='{..namespace}'
+  NAMESPACE: "{{ .NAMESPACE | default .DEFAULT_NAMESPACE }}"
+  SERVICES: '{{ .SERVICES | default "postgresql,kafka,kafka-ui"}}'
+
+tasks:
+  port-forward-wrapper:
+    internal: true
+    summary: |
+      port-forward-wrapper is a wrapper for kubefwd to forward ports for services in a namespace
+    silent: true
+    cmds:
+      - task: verify-connectivity-to-cluster
+      - task: check-if-port-forwarding-running
+      - task: clean-hosts
+      - task: forward-ports
+      - defer: { task: clean-hosts }
+
+  clean-hosts:
+    internal: true
+    silent: true
+    cmds:
+      - sudo sed -i '' '/127\.1/d' /etc/hosts
+
+  verify-connectivity-to-cluster:
+    internal: true
+    silent: true
+    cmds:
+      - if ! kubectl --context {{.CONTEXT}} cluster-info --request-timeout=3s &> /dev/null; then echo "cannot connect to cluster {{.CONTEXT}}, ensure vpn is connected" && exit 1; fi
+
+  check-if-port-forwarding-running:
+    internal: true
+    silent: true
+    cmds:
+      - if pgrep kubefwd > /dev/null; then echo "existing kubefwd is already running, it is recommended to only one instance of kubefwd"; fi
+
+  forward-ports:
+    internal: true
+    silent: false
+    requires:
+      vars: [SERVICES, NAMESPACE, CONTEXT]
+    cmds:
+      - sudo kubefwd svc -n "{{.NAMESPACE}}" --context "{{.CONTEXT}}" -l "app.kubernetes.io/name in ( {{.SERVICES}} )"

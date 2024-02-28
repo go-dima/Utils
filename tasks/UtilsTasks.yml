@@ -1,0 +1,32 @@
+version: "3"
+
+tasks:
+  generate-global-tasks:
+    dir:
+    desc: a task to generate global tasks file
+    alias: [gen]
+    summary: |
+      creating global tasks file if not already there
+    silent: true
+    preconditions:
+      - sh: "! test -f $HOME/Taskfile.yml"
+    cmds:
+      - cp .Taskfile.example.yml $HOME/Taskfile.yml
+      - sed -i '' "s|DIR_PLACEHOLDER|{{.ROOT_DIR}}|g" $HOME/Taskfile.yml
+
+  update-tasks-repo:
+    desc: a task to update the repo containing this taskfile, should be run directly only for testing
+    summary: |
+      update-repo is a task to update the repo containing the taskfile
+    silent: true
+    cmds:
+      - git fetch origin
+      - if git status -sb | grep -q "behind"; then git pull; echo "taskfile updated"; echo "please rerun" && exit 1; fi
+
+  verify-platform:
+    internal: true
+    summary: |
+      verify-platform is a task to verify if the platform is macos
+    silent: true
+    cmds:
+      - if [ "$(uname)" != "Darwin" ]; then echo "this taskfile is only for macos" && exit 1; fi

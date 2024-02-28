@@ -1,0 +1,14 @@
+version: "3"
+
+includes:
+  k8s: ./KubeTasks.yml
+  utils: ./UtilsTasks.yml
+
+tasks:
+  port-forward:
+    desc: port forward services in a namespace
+    deps: [utils:verify-platform, utils:update-tasks-repo]
+    silent: true # change to true to hide raw input
+    cmds:
+      - task: k8s:port-forward-wrapper
+    aliases: [pf]
